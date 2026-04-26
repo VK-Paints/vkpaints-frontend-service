@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-
-const API_BASE = '';
+import api from '../services/api.service';
 
 export default function Quotation() {
   const location = useLocation();
@@ -31,25 +30,19 @@ export default function Quotation() {
   const [orderLoading, setOrderLoading] = useState(false);
 
   useEffect(() => {
-    fetchProducts();
-    fetchRetailers();
+    loadData();
   }, []);
 
-  const fetchProducts = async () => {
+  const loadData = async () => {
     try {
-      const res = await fetch(`${API_BASE}/products`);
-      if (res.ok) setProducts(await res.json());
+      const [productsData, retailersData] = await Promise.all([
+        api.getProducts(),
+        api.getRetailers()
+      ]);
+      setProducts(productsData);
+      setRetailers(retailersData);
     } catch (err) {
-      console.error('Failed to fetch products:', err);
-    }
-  };
-
-  const fetchRetailers = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/retailers`);
-      if (res.ok) setRetailers(await res.json());
-    } catch (err) {
-      console.error('Failed to fetch retailers:', err);
+      console.error('Failed to load quotation data:', err);
     }
   };
 
@@ -113,24 +106,19 @@ export default function Quotation() {
 
     if (itemsToOrder.length === 0) return;
 
-    const userEmail = localStorage.getItem('email');
+    const userEmail = localStorage.getItem('userEmail');
 
     setOrderLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/orders`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: parseInt(userId),
-          userEmail: userEmail,
-          retailerId: parseInt(selectedRetailer),
-          items: itemsToOrder,
-          total_cost: totalCost,
-          requires_labour: requiresLabour
-        })
+      await api.createOrder({
+        userId: parseInt(userId),
+        userEmail: userEmail,
+        retailerId: parseInt(selectedRetailer),
+        items: itemsToOrder,
+        total_cost: totalCost,
+        requires_labour: requiresLabour
       });
 
-      if (!res.ok) throw new Error('Failed to place order');
       setOrderPlaced(true);
     } catch (err) {
       alert('Error placing order: ' + err.message);

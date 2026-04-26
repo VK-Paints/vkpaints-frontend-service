@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-
-const API_BASE = '';
+import api from '../services/api.service';
 
 export default function Login({ onLogin }) {
   const [email, setEmail] = useState('');
@@ -16,17 +15,7 @@ export default function Login({ onLogin }) {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/users/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Login failed');
-      }
+      const data = await api.login({ email, password });
 
       // Store auth data
       localStorage.setItem('token', data.token);

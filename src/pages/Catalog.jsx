@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-const API_BASE = '';
+import api from '../services/api.service';
 
 export default function Catalog() {
   const [products, setProducts] = useState([]);
@@ -10,18 +9,15 @@ export default function Catalog() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchProducts();
+    loadProducts();
   }, []);
 
-  const fetchProducts = async () => {
+  const loadProducts = async () => {
     try {
-      const res = await fetch(`${API_BASE}/products`);
-      if (!res.ok) throw new Error('Failed to fetch products');
-      const data = await res.json();
+      const data = await api.getProducts();
       setProducts(data);
     } catch (err) {
       setError(err.message);
-      // Fallback to empty
       setProducts([]);
     } finally {
       setLoading(false);
