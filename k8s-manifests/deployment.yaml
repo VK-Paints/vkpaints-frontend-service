@@ -1,4 +1,4 @@
-apiVersion: apps/v1
+﻿apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend-deploy
@@ -17,8 +17,21 @@ spec:
       - name: frontend
         image: ghcr.io/vk-paints/vkpaints-frontend-service:latest
         imagePullPolicy: IfNotPresent
-        ports:
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
         - containerPort: 80
         envFrom:
         - configMapRef:
             name: frontend-config
+
