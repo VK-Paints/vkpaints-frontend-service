@@ -1,5 +1,22 @@
 const API_BASE = ''; // Base URL for the API (Empty because of Gateway)
 
+const handleResponse = async (res) => {
+  const contentType = res.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || data.message || 'API Error');
+    return data;
+  }
+  
+  // Non-JSON response (likely HTML error page)
+  if (!res.ok) {
+    if (res.status === 404) throw new Error('API Endpoint not found (404)');
+    if (res.status === 502 || res.status === 503) throw new Error('Service temporarily unavailable (Gateway Error)');
+    throw new Error(`Server returned non-JSON response (${res.status})`);
+  }
+  throw new Error('Expected JSON response but received something else');
+};
+
 const api = {
   // User Authentication
   login: async (credentials) => {
@@ -8,8 +25,7 @@ const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials),
     });
-    if (!res.ok) throw new Error('Invalid email or password');
-    return res.json();
+    return handleResponse(res);
   },
 
   register: async (userData) => {
@@ -18,21 +34,18 @@ const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userData),
     });
-    if (!res.ok) throw new Error('Registration failed');
-    return res.json();
+    return handleResponse(res);
   },
 
   getAllUsers: async () => {
     const res = await fetch(`${API_BASE}/api/users`);
-    if (!res.ok) throw new Error('Failed to fetch users');
-    return res.json();
+    return handleResponse(res);
   },
 
   // Products
   getProducts: async () => {
     const res = await fetch(`${API_BASE}/api/products`);
-    if (!res.ok) throw new Error('Failed to fetch products');
-    return res.json();
+    return handleResponse(res);
   },
 
   // Quotations
@@ -42,8 +55,7 @@ const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params),
     });
-    if (!res.ok) throw new Error('Failed to calculate quotation');
-    return res.json();
+    return handleResponse(res);
   },
 
   // Orders
@@ -53,21 +65,18 @@ const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(orderData),
     });
-    if (!res.ok) throw new Error('Failed to place order');
-    return res.json();
+    return handleResponse(res);
   },
 
   getOrders: async (userId) => {
     const res = await fetch(`${API_BASE}/api/orders/${userId}`);
-    if (!res.ok) throw new Error('Failed to fetch orders');
-    return res.json();
+    return handleResponse(res);
   },
 
   // Retailers
   getRetailers: async () => {
     const res = await fetch(`${API_BASE}/api/retailers`);
-    if (!res.ok) throw new Error('Failed to fetch retailers');
-    return res.json();
+    return handleResponse(res);
   },
 
   getNearestRetailer: async (coords) => {
@@ -76,8 +85,7 @@ const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(coords),
     });
-    if (!res.ok) throw new Error('Failed to find nearest retailer');
-    return res.json();
+    return handleResponse(res);
   }
 };
 
